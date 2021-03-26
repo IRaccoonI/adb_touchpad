@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import subprocess
 
 
-WAS_MOVED_SCATTER = 1
+WAS_MOVED_SCATTER = 0
 
 # in seconds
 SHORT_PRESS = .15
@@ -65,6 +65,7 @@ def scroll(val):
 
 horizontal = False
 press_down_time = None
+press_up_time = None
 count_click = 0
 count_hold = 0
 is_holded = False
@@ -135,9 +136,13 @@ for line in execute(adb_cmd):
         if unpress_time > SHORT_PRESS:
             count_click = 0
 
-        if (count_click == 1 and wasnt_moved() and not is_holded):
-            is_holded = True
-            m.press()
+        if (count_click == 0 and wasnt_moved() and not is_holded and press_down_time != None):
+            press_time = get_time_delta_in_microseconds(
+                press_down_time, datetime.now()
+            )
+            if press_time > LONG_PRESS:
+                is_holded = True
+                m.press()
 
         val = int(line.split()[3], 16)
         if (pre_y != None):
@@ -186,12 +191,14 @@ for line in execute(adb_cmd):
                 is_holded = False
                 m.release()
 
+
             is_scrolled = False
 
-            press_down_time = datetime.now()
+            press_up_time = datetime.now()
+            press_down_time = None
         else:
             unpress_time = get_time_delta_in_microseconds(
-                press_down_time, datetime.now()
+                press_up_time, datetime.now()
             )
             if unpress_time > SHORT_PRESS:
                 count_click = 0
@@ -200,6 +207,7 @@ for line in execute(adb_cmd):
                 is_scrolled = True
 
             press_down_time = datetime.now()
+            press_up_time = None
             # count_hold += 1
             # m.press()
 
