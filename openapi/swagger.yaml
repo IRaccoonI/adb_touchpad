@@ -1,0 +1,308 @@
+openapi: 3.0.2
+info:
+  title: API Title
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/IRaccoonI/ruppur-api/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: http://80.78.244.203:3005/api
+security:
+- BearerAuth:
+  - admin
+  - inspector
+  - student
+paths:
+  /authorization/login:
+    post:
+      tags:
+      - authorization
+      summary: Login as user with get jwt token
+      requestBody:
+        description: Authorizate
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthorization'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTToken'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailOfError'
+        "401":
+          description: Login or Password are incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailOfError_1'
+  /users:
+    get:
+      tags:
+      - users
+      description: Get all users
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+      security:
+      - BearerAuth:
+        - admin
+        - inspector
+    post:
+      tags:
+      - users
+      description: create new user
+      requestBody:
+        description: user data to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "409":
+          description: Login already existing
+      security:
+      - BearerAuth:
+        - admin
+        - inspector
+  /users/{userId}:
+    get:
+      tags:
+      - users
+      description: Get user by id
+      parameters:
+      - name: userId
+        in: path
+        description: Numeric ID of the user to get
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+        "403":
+          description: "Forbidden. Admin can get all users, Instructor can get only\
+            \ students, Students can't get anyone."
+        "404":
+          description: User Not Found
+      security:
+      - BearerAuth:
+        - admin
+        - inspector
+    put:
+      tags:
+      - users
+      description: Change an user parameters
+      parameters:
+      - name: userId
+        in: path
+        description: Numeric ID of the user to put
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      requestBody:
+        description: User parameters to change
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400_1'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: User Not Found
+        "409":
+          description: Conflict. You can't change login
+      security:
+      - BearerAuth:
+        - admin
+        - inspector
+    delete:
+      tags:
+      - users
+      description: Get user by id
+      parameters:
+      - name: userId
+        in: path
+        description: Numeric ID of the user to delete
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "403":
+          description: "Forbidden. Admin can delete all users, Instructor can delete\
+            \ only students, Students can't delete anyone."
+        "404":
+          description: User Not Found
+      security:
+      - BearerAuth:
+        - admin
+        - inspector
+components:
+  schemas:
+    User:
+      title: User
+      required:
+      - authorization
+      - id
+      - profile
+      - role
+      type: object
+      properties:
+        id:
+          type: integer
+        authorization:
+          $ref: '#/components/schemas/UserAuthorization'
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        role:
+          $ref: '#/components/schemas/UserRole'
+    UserRole:
+      title: UserRole
+      required:
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: integer
+          description: role id
+          example: 0
+        name:
+          type: string
+          description: role name
+          example: admin
+    UserProfile:
+      title: UserProfile
+      required:
+      - firstName
+      - lastName
+      - secondName
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: user first name
+          example: Fedya
+        secondName:
+          type: string
+          description: user second name
+          example: Kalinov
+        lastName:
+          type: string
+          description: user last name
+          example: Bodrov
+      description: user profile
+    UserAuthorization:
+      title: UserAutrorization
+      required:
+      - login
+      - password
+      type: object
+      properties:
+        login:
+          type: string
+          description: user authorization login
+          example: admin
+        password:
+          type: string
+          description: user authorization password
+          example: admin
+      description: user authorization
+    JWTToken:
+      title: JWTToken
+      type: object
+      properties:
+        token:
+          type: string
+          description: jwt token
+          example: very.long.string
+      description: jwt token for requests
+    DetailOfError:
+      title: DetailOfError
+      type: object
+      properties:
+        message:
+          type: string
+          description: error detail
+          example: The request body must contain a login
+      description: object with detail of error
+    DetailOfError_1:
+      title: DetailOfError
+      type: object
+      properties:
+        message:
+          type: string
+          description: error detail
+          example: Login is incorrect
+      description: object with detail of error
+    inline_response_400:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login incorrect, Age not a integer"
+      description: Detail of error
+    inline_response_400_1:
+      properties:
+        message:
+          type: string
+          example: The request body must contain a profile.firstname
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
